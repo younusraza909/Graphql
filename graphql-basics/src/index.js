@@ -1,25 +1,35 @@
 import { GraphQLServer } from "graphql-yoga";
 
+//Scalar Type- String,Boolean,Int,Float,ID
+
 //Type Defination
 const typeDefs = `
   type Query{
-      hello: String
-      location: String
-      bio: String
+     id: ID!
+     name: String!
+     age: Int!
+     employed: Boolean!
+     gpa: Float
   }
 `;
 
 //Resolver
 const resolvers = {
   Query: {
-    hello() {
-      return "This is my first query for graphql";
+    id() {
+      return "abc123";
     },
-    location() {
-      return "Karachi ,Pakistan";
+    name() {
+      return "Younus";
     },
-    bio() {
-      return "Keen to learn programming. Age 20";
+    age() {
+      return 27;
+    },
+    employed() {
+      return true;
+    },
+    gpa() {
+      return null;
     },
   },
 };
