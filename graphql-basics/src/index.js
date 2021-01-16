@@ -28,18 +28,21 @@ const posts = [
     title: "First Post Title",
     body: "First Post Body",
     published: true,
+    author: "1",
   },
   {
     id: "2",
     title: "Second Post Title",
     body: "Second Post Body",
     published: true,
+    author: "1",
   },
   {
     id: "3",
     title: "Third Post Title",
     body: "Third Post Body",
     published: false,
+    author: "2",
   },
 ];
 
@@ -58,6 +61,7 @@ const typeDefs = `
     name:String
     email:String!
     age:Int
+    posts:[Post!]!
   }
 
   type Post{
@@ -65,6 +69,7 @@ const typeDefs = `
     title: String!
     body: String!
     published: Boolean!
+    author:User!
   }
 `;
 
@@ -103,6 +108,20 @@ const resolvers = {
         body: "This is my first post regarding graphql",
         published: true,
       };
+    },
+  },
+  Post: {
+    author(parent, args, context, info) {
+      return users.find((user) => {
+        return user.id === parent.author;
+      });
+    },
+  },
+  User: {
+    posts(parent, args, context, info) {
+      return posts.filter((post) => {
+        return post.author === parent.id;
+      });
     },
   },
 };
