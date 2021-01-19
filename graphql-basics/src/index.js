@@ -4,7 +4,7 @@ import uuidv4 from "uuid/v4";
 //Scalar Type- String,Boolean,Int,Float,ID
 
 // Demo User Data
-const users = [
+let users = [
   {
     id: "1",
     name: "Mike",
@@ -23,7 +23,7 @@ const users = [
   },
 ];
 
-const comments = [
+let comments = [
   {
     id: "1",
     textField: "HelpFul Article",
@@ -44,7 +44,7 @@ const comments = [
   },
 ];
 
-const posts = [
+let posts = [
   {
     id: "1",
     title: "First Post Title",
@@ -80,9 +80,31 @@ const typeDefs = `
   }
 
   type Mutation{
-    createUser(name: String!,email: String!,age:Int): User!
-    createPost(title: String!,body: String!,published: Boolean!,author: ID!): Post!
-    createComment(textField: String!,author: ID!,post: ID!): Comment!
+    createUser(data: CreateUserInput): User!
+    deleteUser(id: ID!): User!
+    createPost(data: CreatePostInput): Post!
+    deletePost(id: ID!): Post!
+    createComment(data: CreateCommentInput): Comment!
+  }
+
+  input CreateUserInput{
+    name: String!
+    email: String!
+    age: Int
+  }
+
+
+  input CreatePostInput{
+    title: String!
+    body: String!
+    published: Boolean!
+    author: ID!
+  }
+
+  input CreateCommentInput{
+    textField: String!
+    author: ID!
+    post: ID!
   }
 
   type User{
@@ -154,7 +176,7 @@ const resolvers = {
   Mutation: {
     createUser(parent, args, ctx, info) {
       const emailTaken = users.some((user) => {
-        return user.email === args.email;
+        return user.email === args.data.email;
       });
 
       if (emailTaken) {
@@ -163,18 +185,45 @@ const resolvers = {
 
       const user = {
         id: uuidv4(),
-        name: args.name,
-        email: args.email,
-        age: args.age,
+        ...args.data,
       };
 
       users.push(user);
 
       return user;
     },
+    deleteUser(parent, args, ctx, info) {
+      const userIndex = users.findIndex((user) => {
+        return user.id === args.id;
+      });
+
+      if (userIndex === -1) {
+        throw new Error("No user found!");
+      }
+
+      // Will return spliced values
+      const deltedUsers = users.splice(userIndex, 1);
+
+      posts = posts.filter((post) => {
+        const match = post.author === args.id;
+
+        if (match) {
+          comments = comments.filter((comment) => {
+            return comment.post !== post.id;
+          });
+        }
+        return !match;
+      });
+
+      //to delte comments user have made on others post
+      comments = comments.filter((comment) => {
+        return comment.author !== args.id;
+      });
+      return deltedUsers[0];
+    },
     createPost(parent, args, ctx, info) {
       const userExists = users.some((user) => {
-        return user.id === args.author;
+        return user.id === args.data.author;
       });
 
       if (!userExists) {
@@ -183,19 +232,32 @@ const resolvers = {
 
       const post = {
         id: uuidv4(),
-        title: args.title,
-        body: args.body,
-        published: args.published,
-        author: args.author,
+        ...args.data,
       };
 
       posts.push(post);
 
       return post;
     },
+    deletePost(parent, args, ctx, info) {
+      const indexPost = posts.findIndex((post) => {
+        return post.id === args.id;
+      });
+
+      if (indexPost === -1) {
+        throw new Error("Post not found");
+      }
+
+      const deletedPost = posts.splice(indexPost, 1);
+
+      comments = comments.filter((comment) => {
+        return comment.post !== args.id;
+      });
+      return deletedPost[0];
+    },
     createComment(parent, args, ctx, info) {
       const userExists = users.some((user) => {
-        return user.id === args.author;
+        return user.id === args.data.author;
       });
 
       if (!userExists) {
@@ -203,7 +265,7 @@ const resolvers = {
       }
 
       const postPublished = posts.some((post) => {
-        return post.id === args.post && post.published === true;
+        return post.id === args.data.post && post.published === true;
       });
 
       if (!postPublished) {
@@ -212,9 +274,7 @@ const resolvers = {
 
       const comment = {
         id: uuidv4(),
-        textField: args.textField,
-        author: args.author,
-        post: args.post,
+        ...args.data,
       };
 
       comments.push(comment);
