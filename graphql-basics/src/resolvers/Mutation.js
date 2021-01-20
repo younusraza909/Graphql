@@ -48,6 +48,34 @@ const mutation = {
     });
     return deltedUsers[0];
   },
+  updateUser(parent, args, { db: { users } }, info) {
+    const { id, data } = args;
+    const user = users.find((user) => user.id === id);
+
+    if (!user) {
+      throw new Error("User Not Found");
+    }
+
+    if (typeof data.email === "string") {
+      const emailTaken = users.some((user) => user.email === data.email);
+
+      if (emailTaken) {
+        throw new Error("Email taken");
+      }
+
+      user.email = data.email;
+    }
+
+    if (typeof data.name === "string") {
+      user.name = data.name;
+    }
+
+    if (typeof data.age !== "undefined") {
+      user.age = data.age;
+    }
+
+    return user;
+  },
   createPost(parent, args, { db: { users, posts } }, info) {
     const userExists = users.some((user) => {
       return user.id === args.data.author;
@@ -81,6 +109,28 @@ const mutation = {
       return comment.post !== args.id;
     });
     return deletedPost[0];
+  },
+  updatePost(parent, args, { db: { posts } }, info) {
+    const { id, data } = args;
+    const postExists = posts.find((post) => post.id === id);
+
+    if (!postExists) {
+      throw new Error("Posts not available");
+    }
+
+    if (typeof data.title === "string") {
+      postExists.title = data.title;
+    }
+
+    if (typeof data.body === "string") {
+      postExists.body = data.body;
+    }
+
+    if (typeof data.published === "boolean") {
+      postExists.published = data.published;
+    }
+
+    return postExists;
   },
   createComment(parent, args, { db: { comments, posts, users } }, info) {
     const userExists = users.some((user) => {
@@ -120,6 +170,15 @@ const mutation = {
     const deltedComments = comments.splice(commentIndex, 1);
 
     return deltedComments[0];
+  },
+  updateComment(parent, args, { db: { comments } }, info) {
+    const comment = comments.find((comment) => comment.id === args.id);
+
+    if (typeof args.textField === "string") {
+      comment.textField = args.textField;
+    }
+
+    return comment;
   },
 };
 export { mutation as default };
